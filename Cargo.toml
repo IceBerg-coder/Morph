@@ -1,0 +1,28 @@
+[package]
+name = "morph"
+version = "0.1.0"
+edition = "2021"
+authors = ["Morph Contributors"]
+description = "Morph: The Self-Optimizing Language"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/morph-lang/morph"
+keywords = ["language", "compiler", "programming-language"]
+categories = ["compilers", "development-tools"]
+
+[[bin]]
+name = "mrc"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+thiserror = "1.0"
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.11"
+
+[dev-dependencies]
+pretty_assertions = "1.4"
+
+[profile.release]
+opt-level = 3
+lto = true

@@ -1,0 +1,22 @@
+// Hello World example in Morph
+// Stage 0: Draft mode
+
+proto main() {
+    log("Hello, Morph!")
+}
+
+// Match expression example
+proto get_grade(score) {
+    return match score {
+        _ => "F"
+    }
+}
+
+// For loop with where clause
+proto process_items(items) {
+    var result = []
+    for item in items where !item.processed {
+        result.push(claim process(item))
+    }
+    return result
+}

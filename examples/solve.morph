@@ -1,0 +1,25 @@
+// Solve block examples in Morph
+
+// Declarative constraint solving
+solve process_images(files) {
+    let images = files where extension is ".jpg"
+    ensure images.size < 100mb
+    return images
+}
+
+// Solve with multiple constraints
+solve optimize_route(points) {
+    let start = points[0]
+    let end = points[points.length - 1]
+    let path = find_shortest_path(start, end)
+    ensure path.distance < 1000km
+    ensure path.time < 2h
+    return path
+}
+
+// Solve block with early return
+solve find_user(users, target_id) {
+    for user in users {
+        if user.id == target_id => return claim user
+    }
+}
