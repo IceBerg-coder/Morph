@@ -1,199 +1,175 @@
-# **Morph: The Self-Optimizing Language**
+# Morph: The Self-Optimizing Language
 
-**Version 1.5 (Comprehensive Specification with Syntax Design)**
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
 
 Morph is a multi-stage programming language designed to eliminate the "Two-Language Problem." It allows developers to prototype with the fluidity and speed of Python while deploying with the performance and safety of C++ or Rust.
 
-## **1\. Syntax Design & Grammar**
+## Quick Start
 
-Morph's syntax is designed for **"Intent-First Programming."** It prioritizes readability in the proto stage while providing the structural rigidness required for solid hardening.
+```bash
+# Build the compiler
+cargo build --release
 
-### **1.1 Keywords & Identifiers**
+# Run a Morph file
+./target/release/mrc run examples/hello.morph
 
-* **Definition**: proto, solid, type, flow  
-* **Storage**: let (immutable), var (mutable)  
-* **Control**: if, else, else if, match, for, in, return  
-* **Pulse Logic**: claim, delegate  
-* **Declarative**: solve, ensure  
-* **Built-ins**: log (Standard output)
+# Check stability scores
+./target/release/mrc status examples/hello.morph
 
-### **1.2 The Pipe Operator (|\>)**
+# Tokenize for debugging
+./target/release/mrc tokenize examples/hello.morph
 
-To replace nested function calls (common in Python), Morph uses a left-to-right pipe operator. This is also the preferred way to handle output.
+# Parse and show AST
+./target/release/mrc parse examples/hello.morph
+```
 
-// Standard approach  
-let result \= process(parse(fetch(url)))
+## Example
 
-// Morph approach (Syntax Design: Data Flow)  
-url |\> fetch |\> parse |\> process |\> log
-
-### **1.3 Structural Pattern Matching & Conditionals**
-
-Morph uses match as an expression. While else if is supported for simple checks, match is the preferred "Morph way" to handle complex branching because it allows the compiler to generate optimized jump tables in the solid stage.
-
-// Multi-branch conditional (Python's elif equivalent)  
-if score \> 90 {  
-    log("A")  
-} else if score \> 80 {  
-    log("B")  
-} else {  
-    log("C")  
+```morph
+// Hello World in Morph
+proto main() {
+    log("Hello, Morph!")
 }
 
-// Preferred: Match Expression  
-let grade \= match score {  
-    90..100 \=\> "A",  
-    80..89  \=\> "B",  
-    \_       \=\> "C"  
+// Pipe operator for data flow
+proto process_data(data) {
+    let result = data 
+        |> filter(x => x > 0)
+        |> map(x => x * 2)
+        |> sum
+    result |> log
 }
 
-### **1.4 Declarative Solve Blocks**
-
-The solve block allows developers to state a requirement, leaving the implementation details to the compiler's current stage.
-
-solve process\_images(files) {  
-    let images \= files where extension is ".jpg"  
-    ensure images.size \< 100mb // Compiler auto-scales resolution  
-    return images  
+// Pattern matching
+proto get_grade(score) {
+    return match score {
+        90..100 => "A"
+        80..89 => "B"
+        70..79 => "C"
+        _ => "F"
+    }
 }
+```
 
-### **1.5 Control Flow Philosophy (No while, break, or continue)**
+## Core Philosophy: The Morphing Lifecycle
 
-Morph omits traditional jump-based control flow to ensure Pulse safety and enable aggressive Stage 3 optimizations.
-
-#### **Replacing continue with Guards**
-
-Instead of skipping an iteration with continue, Morph uses the where keyword or nested if blocks.
-
-// Morph (Intent-First)  
-for item in items where \!item.bad {  
-    process(item)  
-}
-
-#### **Replacing break with Early Returns or Match**
-
-Instead of breaking a loop, Morph encourages using return within a solve block or using a match to find a single target.
-
-// Finding a single user  
-let target \= solve {  
-    for user in users {  
-        if user.id \== 101 \=\> return claim user  
-    }  
-}
-
-## **2\. Core Philosophy: The Morphing Lifecycle**
-
-Morph exists on a spectrum of performance stages.
+Morph exists on a spectrum of performance stages:
 
 | Stage | Mode | Technology | Performance Target |
-| :---- | :---- | :---- | :---- |
+|-------|------|------------|-------------------|
 | **0: Draft** | proto | Tree-walk Interpreter | Prototyping (Python-equiv) |
-| **1: Observe** | proto | JIT \+ Type Profiling | Scripting (JS-equiv) |
+| **1: Observe** | proto | JIT + Type Profiling | Scripting (JS-equiv) |
 | **2: Refine** | Transition | Hot-path Analysis | Optimization Phase |
 | **3: Solid** | solid | LLVM Native Binary | Systems (C/Rust-equiv) |
 
-### **Example: Lifecycle Transition**
+## Language Features
 
-// Function starts in Stage 0 (Draft)  
-proto add\_vectors(a, b) {  
-    return a \+ b  
+### 1. Intent-First Syntax
+
+Morph prioritizes readability and developer intent:
+
+- **Pipe Operator** (`|>`): Left-to-right data flow
+- **Pattern Matching**: Expressive `match` expressions
+- **Type Annotations**: Optional but powerful
+- **No Traditional Loops**: `for` with guards instead of `while/break/continue`
+
+### 2. Ghost Types
+
+Ghost Types provide zero-cost abstractions by adding metadata that is stripped during hardening:
+
+```morph
+type Email = String <Ghost: "Regex", pattern: "^.+@.+$">
+
+type Vertex = {
+    pos: Vec3,
+    uv:  Vec2
+} <Ghost: "Buffer_Layout_Packed">
+```
+
+### 3. Temporal Pulse Memory (TPM)
+
+Scoped memory management with the `claim` keyword:
+
+```morph
+proto process_data(input) {
+    let items = json.parse(input)
+    var output = []
+    for item in items {
+        let temp = item.val * 1.5
+        output.push(claim temp) // Claimed to parent scope
+    }
+    return output
 }
+```
 
-// After 10k calls with List\<f64\>, mrc hardens it to Stage 3 (Solid):  
-/\* solid add\_vectors(a: List\<f64\>, b: List\<f64\>) \-\> List\<f64\> {  
-    @simd\_vectorize   
-    ... native binary ...  
-}  
-\*/
+### 4. Declarative Solve Blocks
 
-## **3\. Memory Management: Temporal Pulse Memory (TPM)**
+State requirements, let the compiler optimize:
 
-### **3.1 Pulse Zones & The claim Keyword**
-
-proto process\_data(input\_string) {  
-    let items \= json.parse(input\_string) // Local Pulse  
-      
-    var output \= \[\]  
-    for item in items {  
-        let temp\_math \= item.val \* 1.5   
-        output.push(claim temp\_math) // Claimed to parent scope  
-    }  
-    return output // Parent Pulse returned to caller  
+```morph
+solve process_images(files) {
+    let images = files where extension is ".jpg"
+    ensure images.size < 100mb
+    return images
 }
+```
 
-## **4\. Type System: Ghost Types**
+## CLI Commands
 
-**Ghost Types** provide zero-cost abstractions by adding metadata that is stripped during hardening.
+| Command | Description |
+|---------|-------------|
+| `mrc run <file>` | Execute in Draft mode (Stage 0) |
+| `mrc status <file>` | Check stability scores |
+| `mrc harden <file>` | Compile to native binary (Stage 3) |
+| `mrc build` | Build and package project |
+| `mrc tokenize <file>` | Debug: show tokens |
+| `mrc parse <file>` | Debug: show AST |
 
-// Validation in Draft, Byte-offset in Solid  
-type Email \= String \<Ghost: "Regex", pattern: "^.+@.+$"\>
+## Project Structure
 
-type Vertex \= {  
-    pos: Vec3,  
-    uv:  Vec2  
-} \<Ghost: "Buffer\_Layout\_Packed"\>
+```
+morph/
+├── src/
+│   ├── lexer/       # Tokenizer
+│   ├── parser/      # Parser
+│   ├── ast/         # AST definitions
+│   ├── interpreter/ # Stage 0 interpreter
+│   ├── types/       # Type checker
+│   └── cli/         # CLI interface
+├── examples/        # Example programs
+├── plans/           # Architecture docs
+└── tests/           # Test suite
+```
 
-## **5\. The Standard Library (std)**
+## Implementation Status
 
-### **5.1 std.stream (Web Framework)**
+- [x] Lexer (Tokenizer)
+- [x] Parser
+- [x] AST
+- [x] Interpreter (Stage 0: Draft)
+- [x] Type Checker with Ghost Types
+- [ ] JIT Compiler (Stage 1: Observe)
+- [ ] Profiler (Stage 2: Refine)
+- [ ] LLVM Backend (Stage 3: Solid)
 
-import std.stream
+## License
 
-@route("/users/:id")  
-proto get\_user(req, res) {  
-    let id \= req.params.id  
-    let user \= db.query("SELECT \* FROM users WHERE id \= ?", id)  
-    res.json(claim user)  
-}
+Licensed under either of:
 
-### **5.2 std.db (Zero-Copy Database)**
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
 
-import std.db
+at your option.
 
-type Product \= { id: i32, price: f32 } \<Ghost: "Fixed\_Layout"\>
+## Acknowledgments
 
-proto update\_inventory() {  
-    let store \= db.open\<Product\>("inventory.mdb")  
-    for item in store {  
-        if item.price \< 10.0 {  
-            item.price \*= 1.1 // Direct byte modification via mmap  
-        }  
-    }  
-}
+Morph is inspired by:
+- Julia (multi-stage compilation)
+- Rust (memory safety)
+- Python (ease of use)
+- Haskell (type system)
 
-## **6\. Distributed Systems: Pulse Delegation**
-
-import std.cluster
-
-proto distributed\_task() {  
-    let cloud \= cluster.join("my\_cluster")  
-    for i in 0..1000 {  
-        delegate cloud.run(proto() {  
-            return perform\_heavy\_math(i)  
-        })  
-    }  
-}
-
-## **7\. Security: The Capability Model**
-
-// manifest.mpx  
-{  
-    "name": "logger\_lib",  
-    "capabilities": \["std.fs.write"\]  
-}
-
-// logger.morph  
-import std.fs  
-proto log\_message(msg) {  
-    fs.write("app.log", msg) // Allowed  
-    // net.send(...)         // Blocked: No capability declared  
-}
-
-## **8\. Command Line Interface: mrc**
-
-* mrc run main.morph: Dynamic execution.  
-* mrc status: Check Stability Scores.  
-* mrc harden main.morph: Native compilation.  
-* mrc build: Package solid fragments.
+---
 
 *Morph: Prototype in minutes. Deploy at the speed of light.*
