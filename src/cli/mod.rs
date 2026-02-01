@@ -4,6 +4,8 @@ use std::path::PathBuf;
 
 use crate::lexer::Lexer;
 use crate::parser::Parser as MorphParser;
+use crate::interpreter::Interpreter;
+use crate::types::TypeChecker;
 
 /// Morph Compiler CLI
 #[derive(ClapParser)]
@@ -116,8 +118,37 @@ fn run_file(file: PathBuf, verbose: bool) -> Result<()> {
         println!("  Parsed {} declarations", ast.declarations.len());
     }
     
-    // TODO: Implement interpreter for Stage 0
-    println!("Execution complete (interpreter not yet implemented)");
+    // Type check
+    let mut type_checker = TypeChecker::new();
+    match type_checker.check_module(&ast) {
+        Ok(()) => {
+            if verbose {
+                println!("  Type checking passed");
+            }
+        }
+        Err(errors) => {
+            eprintln!("Type errors:");
+            for error in &errors {
+                eprintln!("  - {}", error);
+            }
+            std::process::exit(1);
+        }
+    }
+    
+    // Execute with interpreter
+    let mut interpreter = Interpreter::new();
+    match interpreter.interpret(&ast) {
+        Ok(result) => {
+            if verbose {
+                println!("  Result: {}", result);
+            }
+            println!("Execution complete");
+        }
+        Err(e) => {
+            eprintln!("Runtime error: {}", e);
+            std::process::exit(1);
+        }
+    }
     
     Ok(())
 }

@@ -310,11 +310,18 @@ impl Lexer {
 
     /// Create a token from the current position
     fn make_token(&self, token_type: TokenType) -> Token {
+        let lexeme = self.source[self.start..self.current].to_string();
+        // Calculate start column: current column minus the length of the lexeme
+        let start_column = if self.column >= lexeme.len() {
+            self.column - lexeme.len() + 1
+        } else {
+            1
+        };
         Token::new(
             token_type,
-            self.source[self.start..self.current].to_string(),
+            lexeme,
             self.line,
-            self.column - (self.current - self.start),
+            start_column,
         )
     }
 }

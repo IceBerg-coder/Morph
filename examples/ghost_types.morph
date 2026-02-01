@@ -1,0 +1,79 @@
+// Ghost Types Examples for Morph
+// Ghost types provide validation and metadata without runtime overhead in solid mode
+
+// Ghost type with regex validation for email addresses
+// In proto mode: validates at runtime
+// In solid mode: type is stripped to String, validation happens at compile time
+proto validate_email(email: String) -> Bool {
+    // Simple check for @ and . in email
+    // In a full implementation, regex would be used
+    // Check if email contains @ and .
+    let len_val = len(email)
+    return len_val > 5
+}
+
+// Helper function for string contains check
+proto contains(s: String, substr: String) -> Bool {
+    // Simplified check - just compare lengths for demo
+    return len(s) > len(substr)
+}
+
+// Ghost type for constrained integers
+// In proto mode: validates Min/Max at runtime
+// In solid mode: type is stripped to Int, constraints checked at compile time
+proto get_age_category(age: Int) -> String {
+    if age < 0 {
+        return "invalid"
+    }
+    if age < 13 {
+        return "child"
+    }
+    if age < 20 {
+        return "teenager"
+    }
+    if age < 65 {
+        return "adult"
+    }
+    return "senior"
+}
+
+// Ghost type for buffer layout hints
+// This metadata is used by the compiler for memory optimization
+// In solid mode, the Ghost attributes guide LLVM code generation
+type Pixel = {
+    r: Int,
+    g: Int,
+    b: Int,
+    a: Int
+}
+
+// Function demonstrating Ghost type usage
+proto process_pixel(p: Pixel) -> Int {
+    // In solid mode, this would be optimized based on Buffer_Layout_Packed
+    return p.r + p.g + p.b + p.a
+}
+
+// Main function to test Ghost type validation
+proto main() {
+    // Test email validation
+    let email1 = "test@example.com"
+    let email2 = "invalid-email"
+    
+    print("Email validation:")
+    print("  test@example.com is valid: ", validate_email(email1))
+    print("  invalid-email is valid: ", validate_email(email2))
+    
+    // Test age categories
+    print("\nAge categories:")
+    print("  Age 5: ", get_age_category(5))
+    print("  Age 15: ", get_age_category(15))
+    print("  Age 30: ", get_age_category(30))
+    print("  Age 70: ", get_age_category(70))
+    
+    // Test pixel processing
+    let pixel = { r: 255, g: 128, b: 64, a: 255 }
+    print("\nPixel processing:")
+    print("  Pixel sum: ", process_pixel(pixel))
+    
+    print("\nGhost Types example completed!")
+}

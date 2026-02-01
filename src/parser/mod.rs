@@ -588,8 +588,17 @@ impl Parser {
             }
             TokenType::LeftBrace => {
                 self.advance();
-                let statements = self.parse_block()?;
-                Ok(Expression::Block(statements))
+                // Check if this is a record literal or a block
+                if self.check(TokenType::RightBrace) {
+                    // Empty record literal
+                    self.advance();
+                    Ok(Expression::Literal(Literal::Record(vec![])))
+                } else if self.is_record_literal() {
+                    self.parse_record_literal()
+                } else {
+                    let statements = self.parse_block()?;
+                    Ok(Expression::Block(statements))
+                }
             }
             TokenType::LeftBracket => {
                 self.advance();
@@ -724,6 +733,55 @@ impl Parser {
             }
             _ => bail!("Unexpected token in pattern at line {}", self.peek().line),
         }
+    }
+
+    /// Check if the current position looks like a record literal
+    /// A record literal starts with { identifier: ... }
+    fn is_record_literal(&self) -> bool {
+        // We need to look ahead: if we see { identifier : ... } it's a record
+        // If we see { identifier (not :) it's a block
+        let mut idx = self.current;
+        
+        // Check if we're at an identifier
+        if let TokenType::Identifier(_) = &self.tokens[idx].token_type {
+            idx += 1;
+            // Check if next token is a colon
+            if idx < self.tokens.len() {
+                return matches!(self.tokens[idx].token_type, TokenType::Colon);
+            }
+        }
+        false
+    }
+
+    /// Parse a record literal: { field1: expr1, field2: expr2, ... }
+    fn parse_record_literal(&mut self) -> Result<Expression> {
+        let mut fields = Vec::new();
+        
+        loop {
+            // Parse field name (identifier)
+            let field_name = self.consume_identifier("field name")?;
+            
+            // Consume the colon
+            self.consume(TokenType::Colon, "':' after field name")?;
+            
+            // Parse the field value expression
+            let value = self.parse_expression()?;
+            
+            fields.push((field_name, value));
+            
+            // Check for comma or end of record
+            if !self.match_token(TokenType::Comma) {
+                break;
+            }
+            
+            // Allow trailing comma by checking for closing brace
+            if self.check(TokenType::RightBrace) {
+                break;
+            }
+        }
+        
+        self.consume(TokenType::RightBrace, "'}' after record fields")?;
+        Ok(Expression::Literal(Literal::Record(fields)))
     }
 
     // Helper methods

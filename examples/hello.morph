@@ -2,21 +2,15 @@
 // Stage 0: Draft mode
 
 proto main() {
-    log("Hello, Morph!")
+    print("Hello, Morph!")
 }
 
-// Match expression example
-proto get_grade(score) {
-    return match score {
-        _ => "F"
-    }
+// Simple greeting function
+proto greet(name) {
+    return "Hello, " + name + "!"
 }
 
-// For loop with where clause
-proto process_items(items) {
-    var result = []
-    for item in items where !item.processed {
-        result.push(claim process(item))
-    }
-    return result
+// Simple add function
+proto add(a, b) {
+    return a + b
 }

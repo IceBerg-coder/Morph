@@ -1,34 +1,10 @@
 // Type system examples in Morph
 
-// Ghost type for validation
-type Email = String <Ghost: "Regex", pattern: "^.+@.+$">
-
-// Record type
-type Point = {
-    x: f64,
-    y: f64
-}
-
-// Record with Ghost type for buffer layout
-type Vertex = {
-    pos: Vec3,
-    uv: Vec2
-} <Ghost: "Buffer_Layout_Packed">
-
-// Type alias
-type Vec3 = { x: f64, y: f64, z: f64 }
-type Vec2 = { x: f64, y: f64 }
-
-// Function with type annotations
-proto distance(p1: Point, p2: Point) -> f64 {
-    let dx = p2.x - p1.x
-    let dy = p2.y - p1.y
-    return sqrt(dx * dx + dy * dy)
-}
-
-// Solid mode function (compiled)
-solid fast_distance(p1: Point, p2: Point) -> f64 {
-    let dx = p2.x - p1.x
-    let dy = p2.y - p1.y
-    return sqrt(dx * dx + dy * dy)
+// Main function with simple types
+proto main() {
+    let x = 3.0
+    let y = 4.0
+    let squared = x * x + y * y
+    log("Distance squared")
+    log(squared)
 }

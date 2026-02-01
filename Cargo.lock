@@ -199,6 +199,7 @@ dependencies = [
  "env_logger",
  "log",
  "pretty_assertions",
+ "regex",
  "thiserror",
 ]
 
